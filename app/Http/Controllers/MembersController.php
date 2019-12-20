@@ -144,16 +144,12 @@ class MembersController extends Controller
         DB::delete('DELETE FROM applicants WHERE id = ?', [$id]);
 
         // Get all loans by this applicant
-        $loans = loan::join('applicants', 'loans.applicant_id', '=', 'applicants.id')->where('applicants.id',$id)->get(['loans.*','applicants.first_name','applicants.last_name']);
-        if($loans)
-        {
-            foreach($loans as $loan)
-            {
-                //clear loans an and repayments
-                DB::delete('DELETE FROM loans WHERE id = ?', [$loan->id]);
-                DB::delete('DELETE FROM loan_repayments WHERE loan_id = ?', [$loan->$id]);
-            }
-        }
+        $loans = loan::join('applicants', 'loans.applicant_id', '=', 'applicants.id')->where('applicants.id',$id)->pluck('loans.id')->toArray();
+        
+        //clear loans an and repayments
+        DB::delete('DELETE FROM loans WHERE id IN ?', [$loans]);
+        DB::delete('DELETE FROM loan_repayments WHERE loan_id IN ?', [$loans]);
+           
 
         // Redirect to GroupController@group($id='')
         return redirect()->action('GroupController@group',['id' => $group_id]);
