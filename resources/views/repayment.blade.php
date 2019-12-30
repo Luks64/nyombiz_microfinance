@@ -170,7 +170,7 @@
                         <div class="modal-body">
                             <div class="form-group">
                                 <label for="amount_in">Amount Brought</label>
-                                <input type="number" id="amount_in" name="amount_in" class="form-control" placeholder="All Amount Brought">
+                                <input type="number" step="0.1" id="amount_in" name="amount_in" class="form-control" placeholder="All Amount Brought">
                             </div>
                             <div class="form-group">
                                 <label for="repay_date">Date</label>
