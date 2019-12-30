@@ -15,7 +15,7 @@ use App\Events\LoanInArrears;
 
 class LoansController extends Controller
 {
-    use \Mpociot\Reanimate\ReanimateModels;
+    //use \Mpociot\Reanimate\ReanimateModels;
     /**
      * Create a new controller instance.
      *
@@ -24,6 +24,7 @@ class LoansController extends Controller
     public function __construct(){
         $this->middleware('auth');
     }
+    
     /**
      * Show the application dashboard.
      *
@@ -49,6 +50,7 @@ class LoansController extends Controller
       
         return view('index')->with('principal_out', $principal_out)->with('principal_in', $principal_in)->with('total_loans', $total_loans)->with('employees',$employees)->with('members',$members)->with('groups',$groups)->with('total_interest_due',$total_interest_due)->with('net_given_out',$net_given_out);
     }
+
     /**
      * Show the New Member Form.
      *
@@ -62,10 +64,12 @@ class LoansController extends Controller
 
     //     return view('new_applicant', $data);
     // }
+
     public function edit_applicant($id){
         # code...
 
     }
+
     /**
      * Called when the Next button on the above form is clicked.
      *
@@ -79,6 +83,7 @@ class LoansController extends Controller
         return redirect('member/details/'.$id)->with('success', 'Applicant Created');
         // return redirect('/loan/new');
     }
+
     public function update_applicant(Request $request){
 
         $id = '';
@@ -89,6 +94,7 @@ class LoansController extends Controller
         return redirect('/loan/edit/'.$id)->with('success', 'Applicant Edited');
         // return redirect('/loan/new');
     }
+
     /**
      * Show the New Loan From after clicking next.
      *
@@ -102,6 +108,7 @@ class LoansController extends Controller
 
         return view('new_loan',['applicant'=>$applicant]);
     }
+
     public function edit_loan($id){
         # code...
         $loan = Loan::find($id);
@@ -110,6 +117,7 @@ class LoansController extends Controller
 
         return view('edit_loan', $data);
     }
+
     /**
      * Called when the Save button on the above form is clicked.
      *
@@ -417,6 +425,7 @@ class LoansController extends Controller
     	return redirect('/applicant/'.$id)->with('success', 'Loan Created');
         // return redirect('/user/details');
     }
+
     public function update_loan_to_user(Request $request, $id){
         
         $loan = Loan::find($id);
@@ -718,6 +727,7 @@ class LoansController extends Controller
         return redirect('/applicant/'.$id)->with('success', 'Loan Updated');
         // return redirect('/user/details');
     }
+
     /**
      * Called when the Calculate button on the New Loan Form is clicked.
      *
@@ -771,6 +781,7 @@ class LoansController extends Controller
 
         return response()->json($data); 
     }
+
     /**
      * Called when the Calculate button on the New Loan Form is clicked.
      *
@@ -1045,6 +1056,7 @@ class LoansController extends Controller
             }
         }  
     }
+
     public function getNewApplicant($id){
 
         $loan = Loan::find($id);
@@ -1062,6 +1074,7 @@ class LoansController extends Controller
 
         return view('applicant', $user, $loan_details)->with('schedule', $schedule);
     }
+
     public function getOldApplicant($id){
 
         $loan = Loan::find($id);
@@ -1081,6 +1094,7 @@ class LoansController extends Controller
 
         return view('old_applicant', $user, $loan_details)->with('schedule', $schedule);
     }
+
     public function getLoans(){
         $loans = loan::leftjoin('applicants', 'loans.applicant_id', '=', 'applicants.id')->get(['loans.*','applicants.first_name','applicants.last_name']);
 
@@ -1090,6 +1104,7 @@ class LoansController extends Controller
 
         return view('loans', $data);
     }
+
     public function getActiveLoans(){
         $loans = loan::leftjoin('applicants', 'loans.applicant_id', '=', 'applicants.id')->where('loans.status', 0)->get(['loans.*','applicants.first_name','applicants.last_name']);
 
@@ -1099,6 +1114,7 @@ class LoansController extends Controller
 
         return view('active_loans', $data);
     }
+
     public function getArrearLoans(){
         $loans = loan::leftjoin('applicants', 'loans.applicant_id', '=', 'applicants.id')->where('loans.status', 0)->where('loans.date_of_completion', '<', Carbon::now()->toDateString())->get(['loans.*','applicants.first_name','applicants.last_name']);
 
@@ -1119,6 +1135,7 @@ class LoansController extends Controller
         $loan = Loan::find($id);
         event(new LoanInArrears($loan));
     }
+
     /**
      * post data to the loanRepayment table/model.
      *
@@ -1145,6 +1162,7 @@ class LoansController extends Controller
 
         return view('repayment', $data)->with('pay', 'Paying Loan')->with('total', $total);
     }
+
     public function repay(Request $request){
         # code...
         $total_p = DB::table('loan_repayments')->where('loan_id', $request->loan_id)->sum('principal');
@@ -1167,9 +1185,10 @@ class LoansController extends Controller
 
         $running_balance = $request->amount_in;
 
+        //Get repayments depending on cumulative P + I 
         $loan_repayments = DB::select('SELECT t.* FROM `loan_repayments` AS t WHERE (SELECT SUM(y.principal - y.principal_repaid + y.interest - y.interest_repaid) FROM `loan_repayments` AS y WHERE y.id <= t.id AND y.loan_id = ?) <= ? AND t.status = 0 AND t.loan_id = ? 
         UNION DISTINCT 
-        (SELECT t.* FROM `loan_repayments` AS t WHERE (SELECT SUM(y.principal - y.principal_repaid + y.interest - y.interest_repaid) FROM `loan_repayments` AS y WHERE y.id <= t.id AND y.loan_id = ?) > ? AND t.status = 0 AND t.loan_id = ? LIMIT 1)',[$request->loan_id, $request->amount_in,$request->loan_id,$request->loan_id, $request->amount_in,$request->loan_id]); 
+        (SELECT t.* FROM `loan_repayments` AS t WHERE (SELECT SUM(y.principal - y.principal_repaid + y.interest - y.interest_repaid) FROM `loan_repayments` AS y WHERE y.id <= t.id AND y.loan_id = ?) > ? AND t.status = 0 AND t.loan_id = ? ORDER BY t.id ASC LIMIT 1)',[$request->loan_id, $request->amount_in,$request->loan_id,$request->loan_id, $request->amount_in,$request->loan_id]); 
 
         // dd($loan_repayments);
         foreach($loan_repayments as $loan_repayment){
