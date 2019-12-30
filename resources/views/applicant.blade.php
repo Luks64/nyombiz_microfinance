@@ -132,23 +132,17 @@
                             </tr>
                             </thead>
                             <tbody>
-                            	@foreach($schedule as $sch)
-                            <tr>
-                                <td>{{	$sch->no }}</td>
-                                <?php
-                                    $formated_due_date = explode('-', $sch->due_date);
-                                    $day = $formated_due_date[2];
-                                    $month = $formated_due_date[1];
-                                    $year = $formated_due_date[0];
-                                ?>
-	                            <td><span class='hide'>{{$sch->due_date}}</span>{{ $day }}/{{$month}}/{{$year}}</td>
+                            @foreach($schedule as $sch)
+                            <tr @if( Carbon\Carbon::now()->weekOfYear ==Carbon\Carbon::parse($sch->due_date)->weekOfYear) style="background-color:wheat" @endif>
+                                <td>{{	$sch->no }}</td>                                
+	                            <td><span class='hide'>{{$sch->due_date}}</span>{{  Carbon\Carbon::parse($sch->due_date)->format('d/m/Y') }} @if( Carbon\Carbon::now()->weekOfYear ==Carbon\Carbon::parse($sch->due_date)->weekOfYear) (This Week) @endif</td>
 	                            <td>{{	number_format($sch->principal, 2) }}</td>
 	                            <td>{{	number_format($sch->interest, 2) }}</td>
 	                            <td>{{	number_format($sch->amount, 2) }}</td>
 	                            <td>{{	number_format($sch->balance, 2) }}</td>
                                 <td><span class="label label-danger label-mini">Uncleared</span></td>
                             </tr>
-                            	@endforeach
+                            @endforeach
                             </tbody>
                         </table>
                     </div>
